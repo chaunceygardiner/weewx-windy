@@ -1,3 +1,31 @@
+1.0 29sep2026
+* ACTION REQUIRED: uploads now go through the Windy Stations API v2.  Windy
+  shuts down the original API at the end of 2026.  v2 identifies a station
+  by its own station ID and password, both on the station's page at
+  https://stations.windy.com/stations: set station_id and password in
+  [StdRESTful] [[Windy]].  Until they are set nothing is uploaded, and the
+  log says so at startup.  api_key and station are no longer used, and a
+  server_url still pointing at the original API is ignored.
+* The password is sent as a bearer token, never in the URL, so it does not
+  appear in logs.
+* Solar radiation is now sent.  Wind direction is sent in whole degrees.
+  A value outside the range Windy accepts is left out, rather than costing
+  the whole observation.
+* Windy's answers are handled: a refused password is logged with Windy's
+  reason and retried hourly, a rejected observation is not retried, and a
+  duplicate or too-frequent upload is skipped.
+* New defaults to match Windy's limits: post_interval 300, stale 1800, and
+  only the newest waiting record is sent (max_backlog 0).
+* python windy.py --check reports which station a password belongs to,
+  without uploading anything.  Run with no arguments it prints a sample
+  URL and no longer uploads.
+* The installer writes a commented [[Windy]] stanza.  On an upgrade it
+  adds station_id and password to the existing section and changes
+  nothing else.
+* The minimum WeeWX really is 4.1: 0.8's version check needed WeeWX 5.0
+  and failed on every WeeWX 4.  Python 3 is required.
+* Tests: tests/test_windy.py.
+
 0.8 04mar2026
 * Removed references to distutils. -tk
 * Minimum supported version of WeeWX is 4.1.
