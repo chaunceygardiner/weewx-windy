@@ -1,3 +1,7 @@
+0.8 04mar2026
+* Removed references to distutils. -tk
+* Minimum supported version of WeeWX is 4.1.
+
 0.7 08may2020
 * Ported to WeeWX V4 logging facility. -tk
 

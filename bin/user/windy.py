@@ -1,11 +1,11 @@
-# Copyright 2019-2020 Matthew Wall
+# Copyright 2019-2026 Matthew Wall
 
 """
 This is a weewx extension that uploads data to a windy.com
 
 http://windy.com
 
-The protocol is desribed at the windy community forum:
+The protocol is described at the windy community forum:
 
 https://community.windy.com/topic/8168/report-you-weather-station-data-to-windy
 
@@ -44,6 +44,7 @@ except ImportError:
     from urllib import urlencode
 
 import json
+import logging
 import sys
 import time
 
@@ -51,45 +52,25 @@ import weewx
 import weewx.manager
 import weewx.restx
 import weewx.units
-from weeutil.weeutil import to_bool, to_int
+from weeutil.weeutil import to_bool, to_int, version_compare
 
-VERSION = "0.7"
+VERSION = "0.8"
 
-if weewx.__version__ < "4":
-    raise weewx.UnsupportedFeature(
-        "weewx-windy requires WeeWX, found %s" % weewx.__version__)
+REQUIRED_WEEWX = "4.1.0"
+if version_compare(weewx.__version__, REQUIRED_WEEWX) < 0:
+    raise weewx.UnsupportedFeature("weewx %s or greater is required, found %s"
+                                   % (REQUIRED_WEEWX, weewx.__version__))
 
-try:
-    # Test for new-style weewx logging by trying to import weeutil.logger
-    import weeutil.logger
-    import logging
-    log = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
-    def logdbg(msg):
-        log.debug(msg)
+def logdbg(msg):
+    log.debug(msg)
 
-    def loginf(msg):
-        log.info(msg)
+def loginf(msg):
+    log.info(msg)
 
-    def logerr(msg):
-        log.error(msg)
-
-except ImportError:
-    # Old-style weewx logging
-    import syslog
-
-    def logmsg(level, msg):
-        syslog.syslog(level, 'windy: %s' % msg)
-
-    def logdbg(msg):
-        logmsg(syslog.LOG_DEBUG, msg)
-
-    def loginf(msg):
-        logmsg(syslog.LOG_INFO, msg)
-
-    def logerr(msg):
-        logmsg(syslog.LOG_ERR, msg)
-
+def logerr(msg):
+    log.error(msg)
 
 class Windy(weewx.restx.StdRESTbase):
     DEFAULT_URL = 'https://stations.windy.com/pws/update'
@@ -192,13 +173,8 @@ class WindyThread(weewx.restx.RESTThread):
 if __name__ == "__main__":
     weewx.debug = 2
 
-    try:
-        # WeeWX V4 logging
-        weeutil.logger.setup('windy', {})
-    except NameError:
-        # WeeWX V3 logging
-        syslog.openlog('windy', syslog.LOG_PID | syslog.LOG_CONS)
-        syslog.setlogmask(syslog.LOG_UPTO(syslog.LOG_DEBUG))
+    import weeutil.logger
+    weeutil.logger.setup('windy', {})
 
     q = queue.Queue()
     t = WindyThread(q, api_key='123', station=0)
